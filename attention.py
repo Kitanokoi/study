@@ -122,16 +122,18 @@ class DecoderLayer(nn.Module):
 
     def forward(self, x, enc_out, src_mask=None, tgt_mask=None):
         _x = x
-        x = self.self_attn(x, x, x, tgt_mask)
-        x = self.norm1(x + self.dropout(x - _x))
+        self_attn = self.self_attn(x, x, x, src_mask)
+        x = _x + self.dropout(self_attn)
+        x = self.norm1(x)
 
         _x = x
-        x = self.cross_attn(x, enc_out, enc_out, src_mask)
-        x = self.norm2(x + self.dropout(x - _x))
+        cross_attn = self.cross_attn(x, enc_out, enc_out, tgt_mask)
+        x = _x + self.dropout(cross_attn) 
+        x = self.norm2(x)
 
-        _x = x
-        x = self.ff(x)
-        x = self.norm1(x + self.dropout(x - _x))
+        ffn_out = self.ff(x)
+        x = x + ffn_out
+        x = self.norm3(x)      
 
         return x
     
